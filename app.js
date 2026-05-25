@@ -14,4 +14,10 @@ app.get('/', (req, res)=>{
     res.json({message: 'Server is running'});
 });
 
+const { protect } = require('./middleware/auth.middleware');
+
+app.get('/api/test-protect', protect, (req, res) => {
+  res.json({ message: 'Access granted', user: req.user });
+});
+
 module.exports = app;

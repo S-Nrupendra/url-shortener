@@ -1,0 +1,6 @@
+npm init -y
+npm install express
+npm install -D nodemon
+npm install dotenv
+npm install bcrypt
+npm install jsonwebtoken

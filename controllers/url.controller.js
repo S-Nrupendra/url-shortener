@@ -100,4 +100,29 @@ const getMyUrls = async (req, res) => {
   }
 };
 
-module.exports = { shortenUrl, redirectUrl, getMyUrls };
+// @desc    Delete a URL
+// @route   DELETe /api/urls/:code
+// @access  Private
+const deleteUrl = async (req, res) => {
+  try{
+    const {code} = req.params;
+    const url = await Url.findOne({shortCode: code});
+
+    if(!url){
+      return res.status(404).json({message: 'URL not found'});
+    }
+
+    // Check ownership
+    if(url.userId.toString() !== req.user._id.toString()){
+      return res.status(403).json({message: 'Not authorized to delete this URL'});
+    }
+
+    await url.deleteOne();
+
+    res.status(200).json({message: 'URL deleted successfully'});
+  } catch(error){
+    res.status(500).json({message: 'Server error', error: error.message});
+  }
+};
+
+module.exports = { shortenUrl, redirectUrl, getMyUrls, deleteUrl };

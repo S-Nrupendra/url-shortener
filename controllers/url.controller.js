@@ -1,5 +1,6 @@
 const Url = require('../models/Url.model');
 const generateCode = require('../utils/generateCode');
+const redis = require('../config/redis');
 
 // @desc    Shorten a URL
 // @route   POST /api/urls/shorten
@@ -61,6 +62,14 @@ const redirectUrl = async (req, res) => {
   try {
     const { code } = req.params;
 
+    // check Redis cache first
+    const cached = await redis.get(code);
+    if(cached){
+      console.log(`Cache hit: ${code}`);
+      return res.redirect(cached);
+    }
+
+    // Not in cache - query MongoDB
     const url = await Url.findOne({ shortCode: code });
 
     if (!url) {
@@ -76,7 +85,10 @@ const redirectUrl = async (req, res) => {
     url.clicks += 1;
     await url.save();
 
-    res.redirect(url.originalUrl);
+    // Store in Redis cache - expire after 24 hours
+    await redis.set(code, url.originalUrl, 'EX', 86400);
+
+    res.redirect(302, url.originalUrl);
 
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -118,6 +130,9 @@ const deleteUrl = async (req, res) => {
     }
 
     await url.deleteOne();
+
+    // Remove from Redis cache too
+    await redis.del(code);
 
     res.status(200).json({message: 'URL deleted successfully'});
   } catch(error){

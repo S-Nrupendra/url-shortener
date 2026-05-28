@@ -5,3 +5,4 @@ npm install dotenv
 npm install bcrypt
 npm install jsonwebtoken
 npm install ioredis
+npm install express-rate-limit
